@@ -28,9 +28,9 @@
 Finding an apartment or house in Germany can be stressful and
 time-consuming.\
 **Fredy** makes it easier: it automatically scrapes **ImmoScout24,
-Immowelt, Immonet, eBay Kleinanzeigen, and WG-Gesucht** and notifies you
-instantly via **Slack, Telegram, Email, ntfy, discord and more** when new
-listings appear.
+Immowelt, Immonet, eBay Kleinanzeigen, WG-Gesucht, and inBerlinWohnen**
+and notifies you instantly via **Slack, Telegram, Email, ntfy, discord
+and more** when new listings appear.
 
 With a modern architecture, Fredy provides a **clean Web UI**, removes
 duplicates across platforms, and stores results so you never see the
@@ -41,7 +41,7 @@ same listing twice.
 ## ✨ Key Features
 
 -   🏠 Scrapes **ImmoScout24, Immowelt, Immonet, eBay Kleinanzeigen,
-    WG-Gesucht**
+    WG-Gesucht, inBerlinWohnen**
 -   ⚡ Instant notifications: Slack, Telegram, Email (SendGrid,
     Mailjet), ntfy, discord 
 -   🔎 Uses the **ImmoScout Mobile API** (reverse engineered)

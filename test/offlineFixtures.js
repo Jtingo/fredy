@@ -111,6 +111,13 @@ export function buildFetchMock() {
       return { ok: true, status: 200, json: () => Promise.resolve(detailData) };
     }
 
+    // Providers that fetch HTML via plain fetch (instead of the headless
+    // browser) are served their fixture, keyed by hostname like readFixture.
+    const html = await readFixture(urlStr);
+    if (html != null) {
+      return { ok: true, status: 200, text: () => Promise.resolve(html) };
+    }
+
     throw new Error(`Network request blocked in offline mode: ${urlStr}`);
   };
 }

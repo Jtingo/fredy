@@ -329,7 +329,7 @@
   "settings.demoModeHelp": "Im Demo-Modus sucht Fredy nicht nach Immobilien und alle Daten werden um Mitternacht auf Standardwerte zurückgesetzt.",
   "settings.demoModeEnable": "Demo-Modus aktivieren",
   "settings.searchInterval": "Suchintervall",
-  "settings.searchIntervalHelp": "Intervall in Minuten für Anfragen an konfigurierte Dienste. Gehe nicht unter 5 Minuten, um nicht als Bot erkannt zu werden.",
+  "settings.searchIntervalHelp": "Intervall in Minuten für Anfragen an konfigurierte Dienste. Unter 5 Minuten wird jedem Lauf eine zufällige Verzögerung von bis zu 30 Sekunden hinzugefügt, um nicht als Bot erkannt zu werden.",
   "settings.searchIntervalPlaceholder": "Intervall in Minuten",
   "settings.searchIntervalSuffix": "Minuten",
   "settings.workingHours": "Arbeitszeiten",

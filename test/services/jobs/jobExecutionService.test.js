@@ -139,4 +139,38 @@ describe('services/jobs/jobExecutionService', () => {
     expect(update.timestamp).toBeGreaterThanOrEqual(before);
     expect(update.timestamp).toBeLessThanOrEqual(after);
   });
+
+  describe('getScheduleJitterMs', () => {
+    const FIVE_MINUTES_MS = 5 * 60 * 1000;
+
+    it('returns 0 for intervals of 5 minutes or more', async () => {
+      const { getScheduleJitterMs } = await initService();
+      expect(getScheduleJitterMs(FIVE_MINUTES_MS)).toBe(0);
+      expect(getScheduleJitterMs(60 * 60 * 1000)).toBe(0);
+    });
+
+    it('returns 0 for non-finite intervals', async () => {
+      const { getScheduleJitterMs } = await initService();
+      expect(getScheduleJitterMs(NaN)).toBe(0);
+      expect(getScheduleJitterMs(Infinity)).toBe(0);
+    });
+
+    it('returns a value between 0 and 30000ms for intervals below 5 minutes', async () => {
+      const { getScheduleJitterMs } = await initService();
+      for (let i = 0; i < 50; i++) {
+        const jitter = getScheduleJitterMs(60 * 1000);
+        expect(jitter).toBeGreaterThanOrEqual(0);
+        expect(jitter).toBeLessThanOrEqual(30_000);
+      }
+    });
+
+    it('is deterministic with an injected random source', async () => {
+      const { getScheduleJitterMs } = await initService();
+      expect(getScheduleJitterMs(60 * 1000, () => 0.5)).toBe(15_000);
+      expect(getScheduleJitterMs(60 * 1000, () => 0)).toBe(0);
+      expect(getScheduleJitterMs(60 * 1000, () => 1)).toBe(30_000);
+      // just below the threshold still jitters
+      expect(getScheduleJitterMs(FIVE_MINUTES_MS - 1, () => 1)).toBe(30_000);
+    });
+  });
 });

@@ -538,7 +538,7 @@ const GeneralSettings = function GeneralSettings() {
               <div className="generalSettings__tab-content">
                 <SegmentPart name={t('settings.searchInterval')} helpText={t('settings.searchIntervalHelp')}>
                   <InputNumber
-                    min={5}
+                    min={1}
                     max={1440}
                     placeholder={t('settings.searchIntervalPlaceholder')}
                     value={interval}
