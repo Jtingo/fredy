@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Fredy is a self-hosted real estate finder for Germany. It scrapes German real estate portals (ImmoScout24, Immowelt, Immonet, Kleinanzeigen, WG-Gesucht, etc.), deduplicates results across providers, and sends notifications via Slack, Telegram, Email, Discord, ntfy, etc. It includes a React web UI and a built-in MCP server for LLM access to listings data.
+Fredy is a self-hosted real estate finder for Germany. It scrapes German real estate portals (ImmoScout24, Immowelt, Kleinanzeigen, WG-Gesucht, etc.), deduplicates results across providers, and sends notifications via Slack, Telegram, Email, Discord, ntfy, etc. It includes a React web UI and a built-in MCP server for LLM access to listings data.
 
 - Node.js >= 22, ESM-only (`"type": "module"`)
 - Default port: 9998, default login: admin / admin
@@ -35,6 +35,10 @@ yarn format && yarn format:check
 
 # DB migrations
 yarn migratedb
+yarn migratedb:overwrite      # allow checksum updates of already-applied migrations
+
+# MCP server via stdio (for Claude Desktop etc.)
+yarn mcp:stdio
 ```
 
 ## Architecture
@@ -47,6 +51,7 @@ index.js (startup)
   ├── getProviders()            # lazily imports lib/provider/*.js
   ├── similarityCache.init()    # preloads hash cache from DB
   ├── api.js                    # starts fastify HTTP server
+  ├── crons                     # tracker-cron, listing-alive-cron, geocoding-cron (lib/services/crons/)
   └── initJobExecutionService() # registers event-bus listeners + starts scheduler
 
 scheduler (every N minutes) or manual trigger via POST /api/jobs/:id/run
@@ -101,16 +106,16 @@ Two transports:
 1. **stdio** (`lib/mcp/stdio.js`) - for Claude Desktop/LM Studio; opens its own DB connection (main process need not be running)
 2. **HTTP** (`/api/mcp`) - authenticated via Bearer token (`mcp_token` column in `users` table)
 
-Tools: `list_jobs`, `get_job`, `list_listings`, `get_listing`, `get_current_date_time`. Responses are Markdown via `lib/mcp/mcpNormalizer.js`.
+Tools: `list_jobs`, `get_job`, `list_listings`, `get_listing`, `get_photo_for_listing`, `get_current_date_time`. Responses are Markdown via `lib/mcp/mcpNormalizer.js`.
 
 ## Key Conventions
 
 - **ESM only** - `import`/`export` everywhere, no CommonJS
-- **JSDoc typedefs** (no TypeScript) in `lib/types/` - `listing.js`, `job.js`, `filter.js`, `providerConfig.js`
+- **JSDoc typedefs** (no TypeScript) in `lib/types/` - `listing.js`, `job.js`, `filter.js`, `providerConfig.js`, `browser.js`, `similarityCache.js`
 - **Copyright header** required on all `.js` files - enforced by `lint-staged` pre-commit hook via `copyright.js`
 - **`NoNewListingsWarning`** (`lib/errors.js`) is used as control flow to short-circuit the pipeline (not an error)
 - **Test fixtures** in `test/testFixtures/` - HTML/JSON snapshots per provider; `TEST_MODE=offline` mocks `puppeteerExtractor` and global `fetch` via `test/offlineFixtures.js`
-- **`conf/config.json`** is the only runtime config file; created with defaults if missing
+- **`conf/config.json`** is the only runtime config file; created with defaults if missing. Login sessions expire after `settings.sessionTTL` hours (default 2)
 
 ## Coding
 - After building the task, run the linter
