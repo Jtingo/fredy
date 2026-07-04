@@ -17,6 +17,7 @@ describe('api/routes/dashboardRouter.js', () => {
     const listingsStoragePath = path.join(ROOT, 'lib', 'services', 'storage', 'listingsStorage.js');
     const settingsStoragePath = path.join(ROOT, 'lib', 'services', 'storage', 'settingsStorage.js');
     const securityPath = path.join(ROOT, 'lib', 'api', 'security.js');
+    const jobExecPath = path.join(ROOT, 'lib', 'services', 'jobs', 'jobExecutionService.js');
 
     vi.resetModules();
     vi.doMock(jobStoragePath, () => ({
@@ -31,6 +32,9 @@ describe('api/routes/dashboardRouter.js', () => {
     }));
     vi.doMock(securityPath, () => ({
       isAdmin: () => state.admin,
+    }));
+    vi.doMock(jobExecPath, () => ({
+      getNextScheduledRunAt: () => state.scheduledNextRun,
     }));
 
     const mod = await import(path.join(ROOT, 'lib', 'api', 'routes', 'dashboardRouter.js'));
@@ -50,6 +54,7 @@ describe('api/routes/dashboardRouter.js', () => {
       admin: false,
       jobs: [],
       interval: 30,
+      scheduledNextRun: null,
     };
   });
 
@@ -96,23 +101,22 @@ describe('api/routes/dashboardRouter.js', () => {
     expect(res.json().general.lastRun).toBe(7000);
   });
 
-  it('reports no jitter for intervals of 5 minutes or more', async () => {
+  it('prefers the exact scheduled next run (jitter included) when the scheduler is active', async () => {
+    state.scheduledNextRun = 123_456_789;
     state.jobs = [{ id: 'a', userId: 'u1', shared_with_user: [], lastRunAt: 1000 }];
     app = await buildApp();
 
     const res = await app.inject({ method: 'GET', url: '/api/dashboard/' });
-    expect(res.json().general.nextRunJitterMaxSeconds).toBe(0);
+    expect(res.json().general.nextRun).toBe(123_456_789);
   });
 
-  it('reports the max jitter window for intervals below 5 minutes', async () => {
+  it('falls back to lastRun + interval when the scheduler is not running', async () => {
     state.interval = 2;
     state.jobs = [{ id: 'a', userId: 'u1', shared_with_user: [], lastRunAt: 1000 }];
     app = await buildApp();
 
     const res = await app.inject({ method: 'GET', url: '/api/dashboard/' });
-    const body = res.json();
-    expect(body.general.nextRunJitterMaxSeconds).toBe(30);
-    expect(body.general.nextRun).toBe(1000 + 2 * 60000);
+    expect(res.json().general.nextRun).toBe(1000 + 2 * 60000);
   });
 
   it('returns null lastRun and 0 nextRun when no accessible job has ever run', async () => {

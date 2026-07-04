@@ -71,17 +71,10 @@ export default function Dashboard() {
             value={
               dashboard?.general?.nextRun == null || dashboard?.general?.nextRun === 0
                 ? '---'
-                : format(dashboard?.general?.nextRun, true, locale) +
-                  (dashboard?.general?.nextRunJitterMaxSeconds > 0
-                    ? ` ${t('dashboard.nextSearchJitter', { seconds: dashboard.general.nextRunJitterMaxSeconds })}`
-                    : '')
+                : format(dashboard?.general?.nextRun, true, locale)
             }
             icon={<IconDoubleChevronRight />}
-            description={
-              dashboard?.general?.nextRunJitterMaxSeconds > 0
-                ? t('dashboard.nextSearchDescJitter', { seconds: dashboard.general.nextRunJitterMaxSeconds })
-                : t('dashboard.nextSearchDesc')
-            }
+            description={t('dashboard.nextSearchDesc')}
           />
         </Col>
         <Col xs={24} sm={12} md={12} lg={6} xl={6}>

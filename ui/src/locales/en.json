@@ -37,8 +37,6 @@
   "dashboard.lastSearchDesc": "Last execution timestamp",
   "dashboard.nextSearch": "Next Search",
   "dashboard.nextSearchDesc": "Next execution timestamp",
-  "dashboard.nextSearchJitter": "+0–{{seconds}}s",
-  "dashboard.nextSearchDescJitter": "Next execution timestamp plus a random delay of up to {{seconds}} seconds (bot protection)",
   "dashboard.searchNow": "Search Now",
   "dashboard.searchNowDesc": "Run a search now",
   "dashboard.searchNowButton": "Search now",

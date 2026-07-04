@@ -12,7 +12,7 @@ describe('services/jobs/jobExecutionService', () => {
   let calls;
   let state;
 
-  async function initService() {
+  async function initService(intervalMs = 0) {
     const root = (await import('node:path')).resolve('.');
     const svcPath = root + '/lib/services/jobs/jobExecutionService.js';
     const busPath = root + '/lib/services/events/event-bus.js';
@@ -60,7 +60,7 @@ describe('services/jobs/jobExecutionService', () => {
     }));
 
     const mod = await import(svcPath);
-    mod.initJobExecutionService({ providers: [], settings: { demoMode: false }, intervalMs: 0 });
+    mod.initJobExecutionService({ providers: [], settings: { demoMode: false }, intervalMs });
     return mod;
   }
 
@@ -138,6 +138,33 @@ describe('services/jobs/jobExecutionService', () => {
     expect(update.id).toBe('j1');
     expect(update.timestamp).toBeGreaterThanOrEqual(before);
     expect(update.timestamp).toBeLessThanOrEqual(after);
+  });
+
+  describe('scheduler', () => {
+    it('exposes the exact next run timestamp with jitter pre-drawn, and re-schedules after each run', async () => {
+      vi.useFakeTimers();
+      try {
+        const intervalMs = 2 * 60 * 1000;
+        const mod = await initService(intervalMs);
+
+        const first = mod.getNextScheduledRunAt();
+        expect(first).toBeGreaterThanOrEqual(Date.now() + intervalMs);
+        expect(first).toBeLessThanOrEqual(Date.now() + intervalMs + 30_000);
+
+        // Fire the first scheduled run; the next one must be re-scheduled after it.
+        await vi.advanceTimersByTimeAsync(intervalMs + 30_000);
+        const second = mod.getNextScheduledRunAt();
+        expect(second).toBeGreaterThan(first);
+        expect(second).toBeLessThanOrEqual(Date.now() + intervalMs + 30_000);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('does not schedule and reports null when the interval is 0', async () => {
+      const mod = await initService(0);
+      expect(mod.getNextScheduledRunAt()).toBeNull();
+    });
   });
 
   describe('getScheduleJitterMs', () => {
