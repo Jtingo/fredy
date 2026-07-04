@@ -37,6 +37,8 @@
   "dashboard.lastSearchDesc": "Zeitstempel der letzten Ausführung",
   "dashboard.nextSearch": "Nächste Suche",
   "dashboard.nextSearchDesc": "Zeitstempel der nächsten Ausführung",
+  "dashboard.nextSearchJitter": "+0–{{seconds}}s",
+  "dashboard.nextSearchDescJitter": "Zeitstempel der nächsten Ausführung plus zufällige Verzögerung von bis zu {{seconds}} Sekunden (Bot-Schutz)",
   "dashboard.searchNow": "Jetzt suchen",
   "dashboard.searchNowDesc": "Suche sofort starten",
   "dashboard.searchNowButton": "Jetzt suchen",

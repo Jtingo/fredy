@@ -27,7 +27,7 @@ describe('api/routes/dashboardRouter.js', () => {
       getProviderDistributionForJobIds: () => [],
     }));
     vi.doMock(settingsStoragePath, () => ({
-      getSettings: async () => ({ interval: 30 }),
+      getSettings: async () => ({ interval: state.interval }),
     }));
     vi.doMock(securityPath, () => ({
       isAdmin: () => state.admin,
@@ -49,6 +49,7 @@ describe('api/routes/dashboardRouter.js', () => {
       currentUser: 'u1',
       admin: false,
       jobs: [],
+      interval: 30,
     };
   });
 
@@ -93,6 +94,25 @@ describe('api/routes/dashboardRouter.js', () => {
 
     const res = await app.inject({ method: 'GET', url: '/api/dashboard/' });
     expect(res.json().general.lastRun).toBe(7000);
+  });
+
+  it('reports no jitter for intervals of 5 minutes or more', async () => {
+    state.jobs = [{ id: 'a', userId: 'u1', shared_with_user: [], lastRunAt: 1000 }];
+    app = await buildApp();
+
+    const res = await app.inject({ method: 'GET', url: '/api/dashboard/' });
+    expect(res.json().general.nextRunJitterMaxSeconds).toBe(0);
+  });
+
+  it('reports the max jitter window for intervals below 5 minutes', async () => {
+    state.interval = 2;
+    state.jobs = [{ id: 'a', userId: 'u1', shared_with_user: [], lastRunAt: 1000 }];
+    app = await buildApp();
+
+    const res = await app.inject({ method: 'GET', url: '/api/dashboard/' });
+    const body = res.json();
+    expect(body.general.nextRunJitterMaxSeconds).toBe(30);
+    expect(body.general.nextRun).toBe(1000 + 2 * 60000);
   });
 
   it('returns null lastRun and 0 nextRun when no accessible job has ever run', async () => {
