@@ -44,10 +44,14 @@ describe('#inberlinwohnen testsuite()', () => {
       }
 
       expect(listings).toBeInstanceOf(Array);
-      // Normalized listings carry numeric values before notification formatting
+      // Normalized listings carry numeric values before notification formatting.
+      // Price and size are rounded to whole euros / m² so cent-level
+      // recalculations on the portal do not produce new listing hashes.
       listings.forEach((listing) => {
         expect(listing.price).toBeTypeOf('number');
+        expect(Number.isInteger(listing.price)).toBe(true);
         expect(listing.size).toBeTypeOf('number');
+        expect(Number.isInteger(listing.size)).toBe(true);
         expect(listing.rooms).toBeTypeOf('number');
         if (listing.image != null) {
           expect(listing.image).toContain('https://inberlinwohnen.de/');
