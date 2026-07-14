@@ -92,4 +92,129 @@ describe('similarityCache', () => {
     expect(removeEntry({ title: 'Z', price: 0, address: undefined })).toBe(true);
     expect(checkAndAddEntry({ title: 'Z', price: 0, address: null })).toBe(false);
   });
+
+  describe('fuzzy cross-portal matching', () => {
+    // Real-world pairs: the same flat syndicated by the housing company to
+    // immoscout and inberlinwohnen with diverging address formats and rounding.
+    it('detects the same flat despite different address formats (str. vs straße, city/district suffixes)', async () => {
+      const { checkAndAddEntry } = await loadModuleWith();
+
+      expect(
+        checkAndAddEntry({
+          title: '2 Zimmerwohnung im Kollwitzkiez sucht neuen Mieter!',
+          price: 859,
+          address: 'Sredzkistr. 16, 10435 Berlin, Prenzlauer Berg',
+        }),
+      ).toBe(false);
+
+      expect(
+        checkAndAddEntry({
+          title: '2 Zimmerwohnung im Kollwitzkiez sucht neuen Mieter!',
+          price: 859,
+          address: 'Sredzkistraße 16, 10435, Pankow',
+        }),
+      ).toBe(true);
+    });
+
+    it('detects the same flat despite small price differences (rounding across portals)', async () => {
+      const { checkAndAddEntry } = await loadModuleWith();
+
+      expect(
+        checkAndAddEntry({
+          title: 'Einfach mittendrin - mit der U8 nach Hause fahren!',
+          price: 526,
+          address: 'Demminer Straße 3, 13355 Berlin, Wedding',
+        }),
+      ).toBe(false);
+
+      expect(
+        checkAndAddEntry({
+          title: 'Einfach mittendrin - mit der U8 nach Hause fahren!',
+          price: 525,
+          address: 'Demminer Straße 3, 13355, Mitte',
+        }),
+      ).toBe(true);
+    });
+
+    it('matches case-insensitively on house numbers and titles', async () => {
+      const { checkAndAddEntry } = await loadModuleWith();
+
+      expect(
+        checkAndAddEntry({
+          title: 'Iranische Straße 4b, 2 Zimmer, 1.OG, Rechts 1',
+          price: 572,
+          address: 'Iranische Straße 4b, 13347 Berlin, Wedding',
+        }),
+      ).toBe(false);
+
+      expect(
+        checkAndAddEntry({
+          title: 'Iranische Straße 4B, 2 Zimmer, 1.OG, Rechts 1',
+          price: 572,
+          address: 'Iranische Straße 4B, 13347, Mitte',
+        }),
+      ).toBe(true);
+    });
+
+    it('does NOT match different flats in the same building with the same title but diverging prices', async () => {
+      const { checkAndAddEntry } = await loadModuleWith();
+
+      expect(
+        checkAndAddEntry({
+          title: '2-Zimmer-Wohnung mit Balkon',
+          price: 525,
+          address: 'Demminer Straße 3, 13355 Berlin',
+        }),
+      ).toBe(false);
+
+      // Same building + title, but 100 € apart → different unit, must notify
+      expect(
+        checkAndAddEntry({
+          title: '2-Zimmer-Wohnung mit Balkon',
+          price: 625,
+          address: 'Demminer Straße 3, 13355, Mitte',
+        }),
+      ).toBe(false);
+    });
+
+    it('does NOT match the same title at different addresses', async () => {
+      const { checkAndAddEntry } = await loadModuleWith();
+
+      expect(
+        checkAndAddEntry({
+          title: 'Im Kiez - 3 Zimmer',
+          price: 525,
+          address: 'Liverpooler Straße 16, 13349, Mitte',
+        }),
+      ).toBe(false);
+
+      expect(
+        checkAndAddEntry({
+          title: 'Im Kiez - 3 Zimmer',
+          price: 525,
+          address: 'Demminer Straße 3, 13355 Berlin, Wedding',
+        }),
+      ).toBe(false);
+    });
+
+    it('is hydrated from storage for fuzzy matching too', async () => {
+      const entries = [{ title: 'Kollwitzkiez Wohnung', price: 859, address: 'Sredzkistr. 16, 10435 Berlin' }];
+      const { initSimilarityCache, checkAndAddEntry } = await loadModuleWith({ entries });
+      initSimilarityCache();
+
+      expect(
+        checkAndAddEntry({ title: 'Kollwitzkiez Wohnung', price: 860, address: 'Sredzkistraße 16, 10435, Pankow' }),
+      ).toBe(true);
+    });
+
+    it('removeEntry also evicts the fuzzy entry', async () => {
+      const { checkAndAddEntry, removeEntry } = await loadModuleWith();
+
+      expect(checkAndAddEntry({ title: 'Fuzzy Flat', price: 700, address: 'Teststraße 1, 10115 Berlin' })).toBe(false);
+      expect(removeEntry({ title: 'Fuzzy Flat', price: 700, address: 'Teststraße 1, 10115 Berlin' })).toBe(true);
+
+      // Neither exact nor fuzzy variant may be flagged after eviction
+      expect(checkAndAddEntry({ title: 'Fuzzy Flat', price: 701, address: 'Teststr. 1, 10115, Mitte' })).toBe(false);
+    });
+  });
 });
