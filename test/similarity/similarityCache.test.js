@@ -156,6 +156,26 @@ describe('similarityCache', () => {
       ).toBe(true);
     });
 
+    it('does NOT match when the price differs by more than 1 €', async () => {
+      const { checkAndAddEntry } = await loadModuleWith();
+
+      expect(
+        checkAndAddEntry({
+          title: 'Wohnung am Park',
+          price: 700,
+          address: 'Parkstraße 5, 10115 Berlin',
+        }),
+      ).toBe(false);
+
+      expect(
+        checkAndAddEntry({
+          title: 'Wohnung am Park',
+          price: 702,
+          address: 'Parkstraße 5, 10115, Mitte',
+        }),
+      ).toBe(false);
+    });
+
     it('does NOT match different flats in the same building with the same title but diverging prices', async () => {
       const { checkAndAddEntry } = await loadModuleWith();
 
