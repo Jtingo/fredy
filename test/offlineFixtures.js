@@ -111,6 +111,25 @@ export function buildFetchMock() {
       return { ok: true, status: 200, json: () => Promise.resolve(detailData) };
     }
 
+    // API-based providers (JSON) are served a {provider}.json fixture, keyed
+    // by hostname like readFixture.
+    try {
+      const providerName = hostnameToProvider[new URL(urlStr).hostname];
+      if (providerName) {
+        const raw = await tryReadFile(path.join(FIXTURES_DIR, `${providerName}.json`));
+        if (raw != null) {
+          return {
+            ok: true,
+            status: 200,
+            json: () => Promise.resolve(JSON.parse(raw)),
+            text: () => Promise.resolve(raw),
+          };
+        }
+      }
+    } catch {
+      // fall through to the HTML fixture / blocked-request handling
+    }
+
     // Providers that fetch HTML via plain fetch (instead of the headless
     // browser) are served their fixture, keyed by hostname like readFixture.
     const html = await readFixture(urlStr);
