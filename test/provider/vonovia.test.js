@@ -51,6 +51,9 @@ describe('#vonovia testsuite()', () => {
         expect(listing.size).toBeTypeOf('number');
         expect(Number.isInteger(listing.size)).toBe(true);
         expect(listing.rooms).toBeTypeOf('number');
+        // Coordinates come straight from the API so the polygon filter works
+        expect(listing.latitude).toBeTypeOf('number');
+        expect(listing.longitude).toBeTypeOf('number');
         if (listing.image != null) {
           expect(listing.image).toMatch(/^https?:\/\//);
         }
